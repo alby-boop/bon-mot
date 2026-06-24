@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Bon Mot</title>
+  <style>
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+    :root {
+      --bg:     #0f0f11;
+      --surf:   #1c1c1f;
+      --surf2:  #2a2a2e;
+      --border: #3a3a3e;
+      --accent: #f4415f;
+      --text:   #f2f2f7;
+      --muted:  #8e8e93;
+      --green:  #30d158;
+      --yellow: #ffd60a;
+      --orange: #ff9f0a;
+      --red:    #ff453a;
+    }
+
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 24px 16px;
+      user-select: none;
+    }
+
+    .wrap { width: 100%; max-width: 480px; }
+
+    /* ── HEADER ── */
+    .hdr { text-align: center; margin-bottom: 22px; }
+    .hdr h1 {
+      font-size: 28px; font-weight: 800; letter-spacing: 6px; text-transform: uppercase;
+      background: linear-gradient(135deg, #fff 0%, #f4415f 100%);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+    }
+    .hdr-date { font-size: 12px; color: var(--muted); margin-top: 5px; letter-spacing: .8px; text-transform: uppercase; }
+
+    /* ── ALREADY PLAYED ── */
+    .done-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 22px; text-align: center; margin-bottom: 16px;
+    }
+    .done-icon { font-size: 40px; margin-bottom: 12px; }
+    .done-title { font-size: 18px; font-weight: 700; margin-bottom: 6px; }
+    .done-sub { font-size: 13px; color: var(--muted); margin-bottom: 14px; }
+    .done-answer {
+      display: inline-block;
+      background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 8px 20px;
+      font-size: 20px; font-weight: 800; letter-spacing: 3px; color: var(--accent);
+    }
+    .tomorrow {
+      text-align: center; font-size: 12px; color: var(--muted);
+      letter-spacing: .5px; margin-top: 12px;
+    }
+
+    /* ── MODE SELECT ── */
+    .mode-label {
+      text-align: center; font-size: 11px; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px;
+    }
+    .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 22px; }
+    .mode-card {
+      background: var(--surf); border: 2px solid var(--border);
+      border-radius: 16px; padding: 18px 14px; cursor: pointer;
+      transition: border-color .2s, box-shadow .2s, transform .1s; text-align: center;
+    }
+    .mode-card:hover { transform: scale(1.02); border-color: var(--accent); }
+    .mode-card:active { transform: scale(.97); }
+    .mode-card.selected { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(244,65,95,.2); }
+    .mc-icon { font-size: 24px; margin-bottom: 8px; }
+    .mc-name { font-size: 15px; font-weight: 700; margin-bottom: 3px; }
+    .mc-desc { font-size: 11px; color: var(--muted); line-height: 1.5; }
+
+    .start-btn {
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
+      background: var(--accent); color: #fff; font-size: 15px; font-weight: 700;
+      cursor: pointer; letter-spacing: .3px; transition: opacity .2s, transform .1s;
+    }
+    .start-btn:hover { opacity: .9; }
+    .start-btn:active { transform: scale(.98); }
+    .start-btn:disabled { opacity: .3; cursor: default; }
+
+    /* ── HOW TO PLAY ── */
+    .how {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 14px; padding: 16px; margin-top: 18px;
+    }
+    .how h3 { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 10px; }
+    .how-step { display: flex; gap: 10px; margin-bottom: 8px; font-size: 13px; line-height: 1.5; color: var(--text); }
+    .how-step:last-child { margin-bottom: 0; }
+    .how-step.subtle { color: var(--muted); font-size: 12px; }
+    .how-n {
+      min-width: 20px; height: 20px; border-radius: 50%;
+      background: var(--surf2); color: var(--muted);
+      font-size: 10px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;
+    }
+
+    /* ── GAME SCREEN ── */
+    .game-top {
+      display: flex; justify-content: space-between; align-items: center;
+      margin-bottom: 14px;
+    }
+    .back-btn {
+      background: var(--surf2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 6px 12px; color: var(--muted);
+      font-size: 12px; cursor: pointer;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    .score-row { display: flex; gap: 16px; align-items: center; }
+    .score-pill {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 20px; padding: 4px 12px; font-size: 13px; font-weight: 700;
+    }
+    .score-pill span { color: var(--accent); }
+    .strikes { display: flex; gap: 5px; }
+    .strike-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 1.5px solid var(--border); background: transparent; transition: background .2s;
+    }
+    .strike-dot.hit { background: var(--red); border-color: var(--red); }
+
+    /* ── TIMER ── */
+    .timer-wrap { text-align: center; margin-bottom: 12px; display: none; }
+    .timer-wrap.visible { display: block; }
+    .timer-bar-bg { background: var(--surf2); border-radius: 4px; height: 5px; overflow: hidden; margin-bottom: 5px; }
+    .timer-bar { height: 100%; background: var(--accent); border-radius: 4px; transition: width .8s linear, background .5s; }
+    .timer-text { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+    .timer-text.urgent { color: var(--red); font-weight: 700; }
+
+    /* ── CLUE ── */
+    .clue-card {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 18px; padding: 20px 20px 16px; margin-bottom: 12px;
+    }
+    .clue-type {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 1.2px;
+      color: var(--accent); font-weight: 700; margin-bottom: 7px;
+    }
+    .clue-text { font-size: 18px; font-weight: 700; line-height: 1.4; }
+    .clue-footer {
+      display: flex; justify-content: space-between; align-items: center; margin-top: 10px;
+    }
+    .mode-badge {
+      font-size: 10px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; padding: 3px 9px; border-radius: 20px;
+    }
+    .mode-badge.classic { background: rgba(48,209,88,.14); color: var(--green); }
+    .mode-badge.hard    { background: rgba(255,69,58,.14); color: var(--red); }
+    .puzzle-label { font-size: 11px; color: var(--muted); }
+
+    /* ── FEEDBACK ── */
+    .feedback {
+      text-align: center; font-size: 13px; font-weight: 600;
+      min-height: 20px; margin-bottom: 8px;
+    }
+    .feedback.correct { color: var(--green); }
+    .feedback.wrong   { color: var(--red); }
+    .feedback.timeout { color: var(--orange); }
+
+    .selected-word {
+      text-align: center; min-height: 26px; margin-bottom: 8px;
+      font-size: 18px; font-weight: 800; letter-spacing: 4px; color: var(--accent);
+    }
+
+    /* ── GRID ── */
+    .grid-wrap {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 18px; padding: 12px; touch-action: none;
+    }
+    .grid { display: grid; gap: 2px; }
+    .cell {
+      aspect-ratio: 1;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 700;
+      border-radius: 5px; background: var(--surf2);
+      cursor: pointer; transition: background .08s, color .08s;
+      color: var(--text);
+    }
+    .cell.path          { background: rgba(244,65,95,.4); color: #fff; }
+    .cell.found-correct { background: rgba(48,209,88,.25); color: var(--green); }
+    .cell.found-wrong   { background: rgba(255,69,58,.22); color: var(--red); }
+
+    /* ── RESULT ── */
+    #screen-result { text-align: center; }
+    .result-icon  { font-size: 52px; margin-bottom: 12px; }
+    .result-title { font-size: 24px; font-weight: 800; margin-bottom: 6px; }
+    .result-sub   { font-size: 13px; color: var(--muted); margin-bottom: 20px; line-height: 1.5; }
+
+    .answer-reveal {
+      background: var(--surf); border: 1px solid var(--border);
+      border-radius: 16px; padding: 18px; margin-bottom: 20px;
+    }
+    .answer-reveal-lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin-bottom: 8px; }
+    .answer-reveal-word { font-size: 28px; font-weight: 900; letter-spacing: 4px; color: var(--accent); }
+
+    .result-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .stat-box { background: var(--surf); border: 1px solid var(--border); border-radius: 14px; padding: 14px; }
+    .stat-v { font-size: 22px; font-weight: 800; }
+    .stat-l { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .8px; margin-top: 2px; }
+
+    .tomorrow-big {
+      font-size: 13px; color: var(--muted); margin-top: 8px; letter-spacing: .3px;
+    }
+
+    .home-btn {
+      width: 100%; padding: 14px; border-radius: 14px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--muted); font-size: 14px; cursor: pointer; margin-top: 10px;
+      transition: color .2s;
+    }
+    .home-btn:hover { color: var(--text); }
+  </style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ── HOME ── -->
+  <div id="screen-home">
+    <div class="hdr">
+      <h1>Bon Mot</h1>
+      <div class="hdr-date" id="hdr-date"></div>
+    </div>
+
+    <!-- Already played today -->
+    <div id="already-played" style="display:none">
+      <div class="done-card">
+        <div class="done-icon" id="done-icon">✓</div>
+        <div class="done-title" id="done-title">Today's puzzle complete</div>
+        <div class="done-sub" id="done-sub"></div>
+        <div class="answer-reveal" style="margin-top:14px;margin-bottom:0">
+          <div class="answer-reveal-lbl">The answer was</div>
+          <div class="answer-reveal-word" id="done-answer-word"></div>
+        </div>
+      </div>
+      <div class="tomorrow">Come back tomorrow for a new puzzle.</div>
+    </div>
+
+    <!-- Play today -->
+    <div id="play-state">
+      <div class="mode-label">Choose a mode</div>
+      <div class="mode-grid">
+        <div class="mode-card" id="card-classic" onclick="selectMode('classic')">
+          <div class="mc-icon">📖</div>
+          <div class="mc-name">Classic</div>
+          <div class="mc-desc">No timer. Find the right word.</div>
+        </div>
+        <div class="mode-card" id="card-hard" onclick="selectMode('hard')">
+          <div class="mc-icon">🔥</div>
+          <div class="mc-name">Hard</div>
+          <div class="mc-desc">30 seconds. Same puzzle.</div>
+        </div>
+      </div>
+      <button class="start-btn" id="start-btn" disabled onclick="startGame()">Start Today's Puzzle</button>
+      <div class="how">
+        <h3>How to play</h3>
+        <div class="how-step"><div class="how-n">1</div><div>Read the clue — it points to one precise word, not just any related word.</div></div>
+        <div class="how-step"><div class="how-n">2</div><div>Drag across the grid to select a word.</div></div>
+        <div class="how-step"><div class="how-n">3</div><div>Three wrong selections and the round ends.</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── GAME ── -->
+  <div id="screen-game" style="display:none">
+    <div class="game-top">
+      <button class="back-btn" onclick="goHome()">← Home</button>
+      <div class="score-row">
+        <div class="strikes" id="strikes-display">
+          <div class="strike-dot" id="s0"></div>
+          <div class="strike-dot" id="s1"></div>
+          <div class="strike-dot" id="s2"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="timer-wrap" id="timer-wrap">
+      <div class="timer-bar-bg"><div class="timer-bar" id="timer-bar"></div></div>
+      <div class="timer-text" id="timer-text">30s</div>
+    </div>
+
+    <div class="clue-card">
+      <div class="clue-type" id="clue-type">Definition</div>
+      <div class="clue-text" id="clue-text"></div>
+      <div class="clue-footer">
+        <div class="puzzle-label" id="puzzle-label"></div>
+        <div class="mode-badge" id="mode-badge">Classic</div>
+      </div>
+    </div>
+
+    <div class="feedback" id="feedback"></div>
+    <div class="selected-word" id="selected-word"></div>
+
+    <div class="grid-wrap">
+      <div class="grid" id="grid"></div>
+    </div>
+  </div>
+
+  <!-- ── RESULT ── -->
+  <div id="screen-result" style="display:none">
+    <div class="hdr" style="margin-bottom:16px"><h1>Bon Mot</h1></div>
+    <div class="result-icon" id="result-icon">🎯</div>
+    <div class="result-title" id="result-title"></div>
+    <div class="result-sub" id="result-sub"></div>
+
+    <div class="answer-reveal" style="margin-bottom:20px">
+      <div class="answer-reveal-lbl">The answer was</div>
+      <div class="answer-reveal-word" id="result-answer"></div>
+    </div>
+
+    <div class="result-stats">
+      <div class="stat-box">
+        <div class="stat-v" id="stat-result" style="color:var(--green)">—</div>
+        <div class="stat-l">Outcome</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-v" id="stat-strikes" style="color:var(--red)">0</div>
+        <div class="stat-l">Strikes</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-v" id="stat-mode" style="color:var(--accent)">—</div>
+        <div class="stat-l">Mode</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-v" id="stat-date" style="color:var(--yellow);font-size:14px">—</div>
+        <div class="stat-l">Date</div>
+      </div>
+    </div>
+
+    <div class="tomorrow-big">Come back tomorrow for a new puzzle.</div>
+    <button class="home-btn" onclick="goHome()">← Back to Home</button>
+  </div>
+
+</div>
+<script>
+// ── PUZZLES ────────────────────────────────────────────────────────────────
+// Each has 6 traps (7 words total in grid). Clues are precise — one right answer.
+
+const PUZZLES = [
+  {
+    type: "Antonym",
+    clue: "The single most precise antonym of 'happy'",
+    answer: "SAD",
+    traps: ["GLOOMY","GLUM","UPSET","BLEAK","MOROSE","MAD"]
+  },
+  {
+    type: "Definition",
+    clue: "Cautiously watchful — specifically expecting trouble",
+    answer: "WARY",
+    traps: ["ALERT","CAREFUL","AWARE","GUARDED","LEERY","WATCHFUL"]
+  },
+  {
+    type: "Synonym",
+    clue: "Expressing a lot using as few words as possible",
+    answer: "CONCISE",
+    traps: ["BRIEF","TERSE","SHORT","CRISP","PITHY","BLUNT"]
+  },
+  {
+    type: "Definition",
+    clue: "Extreme pride, specifically the kind that causes downfall",
+    answer: "HUBRIS",
+    traps: ["PRIDE","VANITY","CONCEIT","EGO","ARROGANCE","SWAGGER"]
+  },
+  {
+    type: "Definition",
+    clue: "To formally and officially confirm a treaty or law",
+    answer: "RATIFY",
+    traps: ["SIGN","PASS","ENACT","APPROVE","ENDORSE","ADOPT"]
+  },
+  {
+    type: "Antonym",
+    clue: "The most precise antonym of 'generous'",
+    answer: "STINGY",
+    traps: ["MEAN","GREEDY","SELFISH","MISERLY","CHEAP","TIGHT"]
+  },
+  {
+    type: "Definition",
+    clue: "To reduce the harm or severity — not eliminate it, just lessen it",
+    answer: "MITIGATE",
+    traps: ["REDUCE","LESSEN","EASE","SOFTEN","CURB","LIMIT"]
+  },
+  {
+    type: "Synonym",
+    clue: "Honest and direct — specifically without any evasion or pretense",
+    answer: "CANDID",
+    traps: ["HONEST","FRANK","DIRECT","BLUNT","OPEN","SINCERE"]
+  },
+  {
+    type: "Definition",
+    clue: "Lasting only a brief moment — here and then gone",
+    answer: "FLEETING",
+    traps: ["BRIEF","SHORT","SWIFT","PASSING","QUICK","HASTY"]
+  },
+  {
+    type: "Definition",
+    clue: "A short, witty saying — specifically designed to be quotable",
+    answer: "EPIGRAM",
+    traps: ["PROVERB","MAXIM","ADAGE","SAYING","MOTTO","QUIP"]
+  },
+  {
+    type: "Antonym",
+    clue: "The precise opposite of 'brave'",
+    answer: "TIMID",
+    traps: ["SCARED","AFRAID","MEEK","SHY","FEARFUL","NERVOUS"]
+  },
+  {
+    type: "Definition",
+    clue: "To formally give up a position of power — usually a throne",
+    answer: "ABDICATE",
+    traps: ["RESIGN","RETIRE","QUIT","YIELD","RENOUNCE","CONCEDE"]
+  },
+  {
+    type: "Synonym",
+    clue: "Deep sadness and guilt specifically for something you did wrong",
+    answer: "REMORSE",
+    traps: ["GUILT","SHAME","REGRET","SORROW","GRIEF","REPENT"]
+  },
+  {
+    type: "Definition",
+    clue: "Moving constantly with no permanent home — as a way of life",
+    answer: "NOMADIC",
+    traps: ["ROAMING","ROVING","DRIFTING","VAGRANT","MOBILE","ADRIFT"]
+  },
+  {
+    type: "Antonym",
+    clue: "The precise opposite of 'vague'",
+    answer: "PRECISE",
+    traps: ["CLEAR","EXACT","SHARP","DIRECT","DEFINED","SPECIFIC"]
+  },
+  {
+    type: "Synonym",
+    clue: "To draw a conclusion from evidence — without being told explicitly",
+    answer: "INFER",
+    traps: ["GUESS","ASSUME","DEDUCE","REASON","SURMISE","GATHER"]
+  },
+  {
+    type: "Definition",
+    clue: "Careful with money in a way that avoids waste — not selfishness",
+    answer: "FRUGAL",
+    traps: ["STINGY","CHEAP","THRIFTY","SPARING","CAREFUL","TIGHT"]
+  },
+  {
+    type: "Synonym",
+    clue: "To abandon someone who needed you — specifically a betrayal",
+    answer: "FORSAKE",
+    traps: ["DESERT","ABANDON","LEAVE","REJECT","BETRAY","DISOWN"]
+  },
+  {
+    type: "Definition",
+    clue: "The art of speaking powerfully and persuasively in public",
+    answer: "ORATORY",
+    traps: ["SPEECH","DEBATE","RHETORIC","LECTURE","ADDRESS","DICTION"]
+  },
+  {
+    type: "Definition",
+    clue: "A feeling of extreme happiness — specifically euphoric and uplifting",
+    answer: "ELATION",
+    traps: ["JOY","BLISS","GLEE","DELIGHT","RAPTURE","ECSTASY"]
+  },
+];
+
+// ── CONSTANTS ──────────────────────────────────────────────────────────────
+
+const GRID_SIZE = 10;
+const TIMER_SECS = 30;
+const DIRS = [[0,1],[0,-1],[1,0],[-1,0],[1,1],[1,-1],[-1,1],[-1,-1]];
+const LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+// ── DAILY LOGIC ────────────────────────────────────────────────────────────
+
+function todayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()+1}-${d.getDate()}`;
+}
+
+function getTodayResult() {
+  try { return JSON.parse(localStorage.getItem('bonmot_' + todayStr())); }
+  catch { return null; }
+}
+
+function saveTodayResult(obj) {
+  try { localStorage.setItem('bonmot_' + todayStr(), JSON.stringify(obj)); }
+  catch {}
+}
+
+function getDailyPuzzle() {
+  const epoch = new Date('2024-01-01').getTime();
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const day = Math.floor((today - epoch) / 86400000);
+  return PUZZLES[day % PUZZLES.length];
+}
+
+function formatDate() {
+  const d = new Date();
+  return d.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+}
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+
+let mode = null;
+let puzzle = null;
+let strikes = 0;
+let inputLocked = false;
+let timerInterval = null;
+let timerLeft = TIMER_SECS;
+let grid = [];
+let selecting = false;
+let startCell = null;
+let highlightedCells = [];
+let eventsAttached = false;
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+
+(function init() {
+  document.getElementById('hdr-date').textContent = formatDate();
+
+  const prior = getTodayResult();
+  if (prior) {
+    showAlreadyPlayed(prior);
+  }
+  showScreen('home');
+})();
+
+function showAlreadyPlayed(result) {
+  document.getElementById('already-played').style.display = 'block';
+  document.getElementById('play-state').style.display = 'none';
+  document.getElementById('done-icon').textContent = result.solved ? '✓' : '✗';
+  document.getElementById('done-title').textContent = result.solved ? 'You got it!' : 'Better luck tomorrow';
+  const modeLabel = result.mode === 'hard' ? 'Hard' : 'Classic';
+  const strikesLabel = result.strikes === 0 ? 'no strikes' : result.strikes === 1 ? '1 strike' : result.strikes + ' strikes';
+  document.getElementById('done-sub').textContent = `${modeLabel} mode · ${strikesLabel}`;
+  document.getElementById('done-answer-word').textContent = result.answer;
+}
+
+// ── HOME ───────────────────────────────────────────────────────────────────
+
+function selectMode(m) {
+  mode = m;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('card-' + m).classList.add('selected');
+  document.getElementById('start-btn').disabled = false;
+}
+
+function goHome() {
+  clearTimer();
+  showScreen('home');
+  mode = null;
+  document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+  document.getElementById('start-btn').disabled = true;
+}
+
+// ── START GAME ─────────────────────────────────────────────────────────────
+
+function startGame() {
+  if (!mode) return;
+
+  puzzle = getDailyPuzzle();
+  strikes = 0;
+  inputLocked = false;
+  highlightedCells = [];
+  selecting = false;
+  startCell = null;
+
+  updateStrikesDisplay();
+  showScreen('game');
+
+  document.getElementById('clue-type').textContent = puzzle.type;
+  document.getElementById('clue-text').textContent = puzzle.clue;
+  document.getElementById('puzzle-label').textContent = 'Today\'s Puzzle';
+
+  const badge = document.getElementById('mode-badge');
+  badge.textContent = mode === 'hard' ? 'Hard' : 'Classic';
+  badge.className = 'mode-badge ' + mode;
+
+  const timerWrap = document.getElementById('timer-wrap');
+  timerWrap.classList.toggle('visible', mode === 'hard');
+
+  buildAndRenderGrid();
+
+  if (!eventsAttached) {
+    document.getElementById('grid').addEventListener('pointerdown', onPointerDown);
+    document.getElementById('grid').addEventListener('pointermove', onPointerMove);
+    document.getElementById('grid').addEventListener('pointerup', onPointerUp);
+    document.getElementById('grid').addEventListener('pointercancel', onPointerUp);
+    eventsAttached = true;
+  }
+
+  if (mode === 'hard') startTimer();
+}
+
+// ── GRID ───────────────────────────────────────────────────────────────────
+
+function buildAndRenderGrid() {
+  const words = shuffle([puzzle.answer, ...puzzle.traps]);
+
+  // Build grid — place answer first to guarantee it's findable
+  const g = Array.from({length: GRID_SIZE}, () => Array(GRID_SIZE).fill(''));
+
+  function tryPlace(word) {
+    for (let attempt = 0; attempt < 300; attempt++) {
+      const dir = DIRS[Math.floor(Math.random() * DIRS.length)];
+      const r = Math.floor(Math.random() * GRID_SIZE);
+      const c = Math.floor(Math.random() * GRID_SIZE);
+      if (canPlace(g, word, r, c, dir)) { placeWord(g, word, r, c, dir); return true; }
+    }
+    return false;
+  }
+
+  // Answer always goes first
+  tryPlace(puzzle.answer);
+  for (const w of words.filter(w => w !== puzzle.answer)) tryPlace(w);
+
+  // Fill blanks
+  for (let r = 0; r < GRID_SIZE; r++)
+    for (let c = 0; c < GRID_SIZE; c++)
+      if (!g[r][c]) g[r][c] = LETTERS[Math.floor(Math.random() * 26)];
+
+  grid = g;
+  renderGrid();
+}
+
+function canPlace(g, word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    const nr = r + dir[0]*i, nc = c + dir[1]*i;
+    if (nr < 0 || nr >= GRID_SIZE || nc < 0 || nc >= GRID_SIZE) return false;
+    if (g[nr][nc] && g[nr][nc] !== word[i]) return false;
+  }
+  return true;
+}
+
+function placeWord(g, word, r, c, dir) {
+  for (let i = 0; i < word.length; i++) {
+    g[r + dir[0]*i][c + dir[1]*i] = word[i];
+  }
+}
+
+function renderGrid() {
+  const gridEl = document.getElementById('grid');
+  gridEl.style.gridTemplateColumns = `repeat(${GRID_SIZE}, 1fr)`;
+  gridEl.innerHTML = '';
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.textContent = grid[r][c];
+      cell.dataset.r = r;
+      cell.dataset.c = c;
+      gridEl.appendChild(cell);
+    }
+  }
+}
+
+function getCell(r, c) {
+  return document.querySelector(`.cell[data-r="${r}"][data-c="${c}"]`);
+}
+
+// ── POINTER INTERACTION ────────────────────────────────────────────────────
+
+function cellAtPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  return el && el.classList.contains('cell') ? el : null;
+}
+
+function onPointerDown(e) {
+  if (inputLocked) return;
+  const el = cellAtPoint(e.clientX, e.clientY);
+  if (!el) return;
+  e.preventDefault();
+  selecting = true;
+  startCell = {r: +el.dataset.r, c: +el.dataset.c};
+  highlightedCells = [startCell];
+  refreshHighlights();
+  document.getElementById('selected-word').textContent = el.textContent;
+}
+
+function onPointerMove(e) {
+  if (!selecting || inputLocked) return;
+  e.preventDefault();
+  const el = cellAtPoint(e.clientX, e.clientY);
+  if (!el) return;
+  const r = +el.dataset.r, c = +el.dataset.c;
+
+  if (r === startCell.r && c === startCell.c) {
+    highlightedCells = [startCell];
+    refreshHighlights();
+    document.getElementById('selected-word').textContent = grid[startCell.r][startCell.c];
+    return;
+  }
+
+  const norm = normalizeDir(r - startCell.r, c - startCell.c);
+  if (!norm) return;
+
+  const cells = [];
+  let cr = startCell.r, cc = startCell.c;
+  for (let i = 0; i <= GRID_SIZE; i++) {
+    cells.push({r: cr, c: cc});
+    if (cr === r && cc === c) break;
+    cr += norm[0]; cc += norm[1];
+    if (cr < 0 || cr >= GRID_SIZE || cc < 0 || cc >= GRID_SIZE) break;
+  }
+  highlightedCells = cells;
+  refreshHighlights();
+  document.getElementById('selected-word').textContent = cellsToWord(cells);
+}
+
+function onPointerUp() {
+  if (!selecting || inputLocked) return;
+  selecting = false;
+  submitSelection();
+}
+
+function normalizeDir(dr, dc) {
+  if (dr === 0 && dc === 0) return null;
+  if (dr !== 0 && dc !== 0 && Math.abs(dr) !== Math.abs(dc)) return null;
+  return [dr === 0 ? 0 : dr > 0 ? 1 : -1, dc === 0 ? 0 : dc > 0 ? 1 : -1];
+}
+
+function cellsToWord(cells) {
+  return cells.map(({r, c}) => grid[r][c]).join('');
+}
+
+function refreshHighlights() {
+  document.querySelectorAll('.cell').forEach(el => {
+    if (el.classList.contains('found-correct')) return;
+    const r = +el.dataset.r, c = +el.dataset.c;
+    const isHl = highlightedCells.some(h => h.r === r && h.c === c);
+    el.classList.toggle('path', isHl);
+  });
+}
+
+function clearHighlights() {
+  highlightedCells = [];
+  document.querySelectorAll('.cell').forEach(el => {
+    if (!el.classList.contains('found-correct')) el.classList.remove('path');
+  });
+}
+
+// ── SUBMIT ─────────────────────────────────────────────────────────────────
+
+function submitSelection() {
+  const word = cellsToWord(highlightedCells);
+  if (word.length < 2) { clearHighlights(); return; }
+
+  const isAnswer = word === puzzle.answer;
+  const isTrap = puzzle.traps.includes(word);
+  if (!isAnswer && !isTrap) { clearHighlights(); document.getElementById('selected-word').textContent = ''; return; }
+
+  inputLocked = true;
+  clearTimer();
+
+  if (isAnswer) {
+    highlightedCells.forEach(({r, c}) => {
+      const el = getCell(r, c);
+      if (el) { el.classList.remove('path'); el.classList.add('found-correct'); }
+    });
+    showFeedback('correct', '✓ Correct!');
+    const result = {solved: true, mode, strikes, answer: puzzle.answer};
+    saveTodayResult(result);
+    setTimeout(() => endRound(result), 1200);
+  } else {
+    const wrongCells = [...highlightedCells];
+    wrongCells.forEach(({r, c}) => {
+      const el = getCell(r, c);
+      if (el) { el.classList.remove('path'); el.classList.add('found-wrong'); }
+    });
+    strikes++;
+    updateStrikesDisplay();
+    showFeedback('wrong', '✗ That\'s a trap — try again!');
+
+    if (strikes >= 3) {
+      const result = {solved: false, mode, strikes, answer: puzzle.answer};
+      saveTodayResult(result);
+      setTimeout(() => endRound(result), 1400);
+    } else {
+      setTimeout(() => {
+        wrongCells.forEach(({r, c}) => {
+          const el = getCell(r, c);
+          if (el) el.classList.remove('found-wrong');
+        });
+        highlightedCells = [];
+        selecting = false;
+        inputLocked = false;
+        clearFeedback();
+        document.getElementById('selected-word').textContent = '';
+        if (mode === 'hard') startTimer();
+      }, 1200);
+    }
+  }
+}
+
+// ── TIMER ──────────────────────────────────────────────────────────────────
+
+function startTimer() {
+  clearTimer();
+  timerLeft = TIMER_SECS;
+  updateTimerUI();
+  timerInterval = setInterval(() => {
+    timerLeft--;
+    updateTimerUI();
+    if (timerLeft <= 0) { clearTimer(); onTimeout(); }
+  }, 1000);
+}
+
+function clearTimer() {
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+}
+
+function updateTimerUI() {
+  const pct = (timerLeft / TIMER_SECS) * 100;
+  const bar = document.getElementById('timer-bar');
+  const txt = document.getElementById('timer-text');
+  bar.style.width = pct + '%';
+  const urgent = timerLeft <= 10;
+  bar.style.background = urgent ? 'var(--red)' : timerLeft <= 20 ? 'var(--orange)' : 'var(--accent)';
+  txt.textContent = timerLeft + 's';
+  txt.className = 'timer-text' + (urgent ? ' urgent' : '');
+}
+
+function onTimeout() {
+  if (inputLocked) return;
+  inputLocked = true;
+  strikes++;
+  updateStrikesDisplay();
+  showFeedback('timeout', '⏱ Time\'s up!');
+  if (strikes >= 3) {
+    const result = {solved: false, mode, strikes, answer: puzzle.answer};
+    saveTodayResult(result);
+    setTimeout(() => endRound(result), 1400);
+  } else {
+    setTimeout(() => {
+      clearHighlights();
+      selecting = false;
+      inputLocked = false;
+      clearFeedback();
+      document.getElementById('selected-word').textContent = '';
+      startTimer();
+    }, 1400);
+  }
+}
+
+// ── END ROUND ──────────────────────────────────────────────────────────────
+
+function endRound(result) {
+  showScreen('result');
+  const solved = result.solved;
+  document.getElementById('result-icon').textContent = solved ? (result.strikes === 0 ? '🏆' : '🎯') : '💀';
+  document.getElementById('result-title').textContent = solved ? 'You got it!' : 'Three Strikes';
+  document.getElementById('result-sub').textContent = solved
+    ? 'You found the right word.'
+    : 'The round ended. The correct word was:';
+  document.getElementById('result-answer').textContent = puzzle.answer;
+  document.getElementById('stat-result').textContent = solved ? 'Solved' : 'Failed';
+  document.getElementById('stat-result').style.color = solved ? 'var(--green)' : 'var(--red)';
+  document.getElementById('stat-strikes').textContent = result.strikes;
+  document.getElementById('stat-mode').textContent = result.mode === 'hard' ? 'Hard' : 'Classic';
+  document.getElementById('stat-date').textContent = new Date().toLocaleDateString('en-US', {month:'short', day:'numeric'});
+}
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+
+function updateStrikesDisplay() {
+  for (let i = 0; i < 3; i++)
+    document.getElementById('s' + i).classList.toggle('hit', i < strikes);
+}
+
+function showFeedback(type, msg) {
+  const el = document.getElementById('feedback');
+  el.textContent = msg; el.className = 'feedback ' + type;
+}
+
+function clearFeedback() {
+  const el = document.getElementById('feedback');
+  el.textContent = ''; el.className = 'feedback';
+}
+
+function showScreen(name) {
+  document.getElementById('screen-home').style.display   = name === 'home'   ? 'block' : 'none';
+  document.getElementById('screen-game').style.display   = name === 'game'   ? 'block' : 'none';
+  document.getElementById('screen-result').style.display = name === 'result' ? 'block' : 'none';
+}
+
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+</script>
+</body>
+</html>
